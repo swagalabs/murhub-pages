@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru" data-root="../../" data-sha="bb394bfe2941bbc701192deaf275280c9b289837">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Data Model · SwagaHub</title><link rel="stylesheet" href="../../style.css">
+<script defer src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="../../app.js"></script>
+<script defer src="../../mermaid.min.js"></script><script defer src="../../diagrams.js"></script></head>
+<body><header class="masthead"><a class="brand" href="../../index.html">SwagaHub</a><nav aria-label="Основная навигация"><a href="../../index.html#documentation">Документация</a><a data-project href="https://github.com/orgs/swagalabs/projects/16">Проект</a></nav></header>
+<main class="container"><a class="back" href="../../index.html#documentation">Все документы</a><article class="document"><h1 id="data-model">Data Model</h1>
+<p><a href="../TechnicalDocument.html">← Core technical document</a> · <a href="Operations.html">Operations</a></p>
+<h2 id="core-relationships">Core relationships</h2>
+<pre class="mermaid">erDiagram
+  USERS ||--o{ CLIENTS : "telegram identity may match"
+  USERS ||--o{ LEARNING_COURSES : owns
+  CLIENTS ||--o{ APPOINTMENTS : books
+  SERVICES ||--o{ APPOINTMENTS : selected
+  AVAILABILITY_SLOTS ||--o| APPOINTMENTS : reserved_by
+  APPOINTMENTS ||--o| APPOINTMENT_FEEDBACK : receives
+  GIVEAWAYS ||--o{ GIVEAWAY_PARTICIPANTS : has
+  GIVEAWAYS ||--o{ GIVEAWAY_WINNERS : produces
+  LEARNING_COURSES ||--o{ COURSE_ENROLLMENTS : has
+  USERS ||--o{ COURSE_ENROLLMENTS : joins
+</pre>
+<h2 id="table-groups">Table groups</h2>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Tables</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identity</td>
+<td><code>users</code>, <code>bot_instances</code>, <code>audit_log</code>, <code>app_strings</code></td>
+<td>User stores Telegram and optional password identity, roles, profile/preferences, calendar token and presence. Password hash is intentionally not selected by default.</td>
+</tr>
+<tr>
+<td>CRM</td>
+<td><code>clients</code>, <code>services</code>, <code>availability_slots</code>, <code>appointments</code>, <code>appointment_feedback</code>, <code>monthly_expenses</code>, <code>custom_time_requests</code></td>
+<td>Operational booking data, master-owned by <code>masterId</code> where applicable.</td>
+</tr>
+<tr>
+<td>Community</td>
+<td><code>showcase_works</code>, <code>client_photos</code>, <code>work_likes</code>, <code>work_like_boosts</code>, <code>suggestions</code>, <code>patch_notes</code></td>
+<td>Portfolio/feed and engagement data.</td>
+</tr>
+<tr>
+<td>Messaging &amp; automation</td>
+<td><code>bot_messages</code>, <code>chat_templates</code>, <code>scheduled_discount_broadcasts</code>, <code>master_summary_logs</code></td>
+<td>Conversation history, message templates, deferred jobs and summary delivery history.</td>
+</tr>
+<tr>
+<td>Growth</td>
+<td><code>giveaways</code>, <code>giveaway_participants</code>, <code>giveaway_winners</code>, <code>learning_courses</code>, <code>course_enrollments</code></td>
+<td>Campaign and education features.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="important-state-fields">Important state fields</h2>
+<ul>
+<li><strong>Appointment:</strong> status enum, source enum, date/start/end times, master/client/service/slot IDs, price, promotion and reminder timestamps, session outcome/no-show notes.</li>
+<li><strong>Availability slot:</strong> master/date/time window, active flag, discount price/promotion fields and reservation context.</li>
+<li><strong>Client:</strong> contact fields, notes, no-show/LTV-related values, preference/re-engagement data, <code>masterId</code> ownership.</li>
+<li><strong>Giveaway:</strong> active window, status, winners count, participation requirements and master owner; entries can be verified before drawing.</li>
+<li><strong>Course enrollment:</strong> <code>pending_payment</code> → <code>confirmed</code> or <code>cancelled</code>.</li>
+<li><strong>Feedback:</strong> one record per appointment, rating/comment/liked-options and public visibility.</li>
+</ul>
+<h2 id="ownership-model">Ownership model</h2>
+<p>The dominant partition key is <code>masterId</code>. A master should see only their own services, clients, availability, appointments, content, and campaigns. Administrators may select/manage other masters. Client-facing queries use the authenticated Telegram-linked identity and booking/client records.</p>
+<p>Because several relationships are represented by ID columns instead of formal relation properties, changes must preserve IDs and query filters explicitly. Do not infer cascading behaviour without reading the service and entity involved.</p>
+<h2 id="schema-evolution">Schema evolution</h2>
+<p><code>getDatabaseConfig()</code> sets <code>synchronize</code> to true only when <code>NODE_ENV !== production</code>. In production, TypeORM will not create or modify tables automatically.</p>
+<p>For every persistent change:</p>
+<ol>
+<li>Update the entity and any DTO/service mapping.</li>
+<li>Create an idempotent, reviewed SQL migration or deployment script.</li>
+<li>Test it against a database snapshot before production.</li>
+<li>Deploy the database change before code that requires the new shape (or make code backward compatible).</li>
+<li>Confirm backup/restore works and update these notes.</li>
+</ol>
+<blockquote class="callout" data-kind="danger">
+<strong class="callout-title">danger</strong><p>Never use schema synchronization as a production migration strategy. Also avoid editing data dumps manually unless the restoring code has been verified.</p>
+</blockquote>
+</article></main>
+<footer><a href="https://github.com/swagalabs/murhub.docs/commit/bb394bfe2941bbc701192deaf275280c9b289837">murhub.docs · bb394bf</a></footer>
+<button type="button" id="update" hidden>Обновить</button></body></html>

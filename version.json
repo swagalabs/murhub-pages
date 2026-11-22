@@ -1,0 +1,16 @@
+{
+  "sha": "bb394bfe2941bbc701192deaf275280c9b289837",
+  "builtAt": "2026-11-22T18:13:04.033Z",
+  "pages": [
+    "docs/Technical%20Notes/API%20Reference.html",
+    "docs/Technical%20Notes/Architecture.html",
+    "docs/Technical%20Notes/Data%20Model.html",
+    "docs/Technical%20Notes/Operations.html",
+    "docs/Technical%20Notes/Security%20and%20Access.html",
+    "docs/TechnicalDocument.html",
+    "index.html",
+    "prototype/flows.html",
+    "prototype/index.html",
+    "prototype/name.html"
+  ]
+}

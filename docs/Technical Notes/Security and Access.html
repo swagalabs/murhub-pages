@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru" data-root="../../" data-sha="bb394bfe2941bbc701192deaf275280c9b289837">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Security and Access · SwagaHub</title><link rel="stylesheet" href="../../style.css">
+<script defer src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="../../app.js"></script>
+</head>
+<body><header class="masthead"><a class="brand" href="../../index.html">SwagaHub</a><nav aria-label="Основная навигация"><a href="../../index.html#documentation">Документация</a><a data-project href="https://github.com/orgs/swagalabs/projects/16">Проект</a></nav></header>
+<main class="container"><a class="back" href="../../index.html#documentation">Все документы</a><article class="document"><h1 id="security-and-access">Security and Access</h1>
+<p><a href="../TechnicalDocument.html">← Core technical document</a> · <a href="API%20Reference.html">API Reference</a> · <a href="Operations.html">Operations</a></p>
+<h2 id="authentication-methods">Authentication methods</h2>
+<ul>
+<li><strong>Telegram:</strong> <code>POST /api/auth/telegram</code> is guarded by Telegram init-data validation. The server derives the Telegram user from validated data, rather than trusting a client-supplied user ID.</li>
+<li><strong>Password:</strong> a user can register/sign in with login and password. Password hashes use bcrypt (cost 12); <code>passwordHash</code> is excluded from standard entity selection.</li>
+<li><strong>Session:</strong> successful authentication returns a signed JWT. Protected calls pass it as a bearer token and <code>JwtAuthGuard</code> resolves the user.</li>
+</ul>
+<h2 id="authorization">Authorization</h2>
+<table>
+<thead>
+<tr>
+<th>Role/guard</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JwtAuthGuard</code></td>
+<td>Signed-in user required.</td>
+</tr>
+<tr>
+<td><code>MasterOrAdminGuard</code></td>
+<td>Master capabilities plus administrators.</td>
+</tr>
+<tr>
+<td><code>AdminOnlyGuard</code></td>
+<td>Global user/role and broadcast administration.</td>
+</tr>
+<tr>
+<td>Service-level ownership</td>
+<td>Prevents a master/client from acting on another owner’s resource.</td>
+</tr>
+</tbody>
+</table>
+<p>The application includes a hard-coded super-admin Telegram identifier that is enforced when that identity signs in. This is an operational break-glass mechanism and should be reviewed with the rest of access policy when ownership changes.</p>
+<h2 id="security-controls-already-present">Security controls already present</h2>
+<ul>
+<li>Global whitelist validation rejects unexpected request fields.</li>
+<li>CORS is restricted to Telegram Web, local development, and the configured Mini App origin.</li>
+<li>Database and application services bind to loopback in Compose; nginx is the intended public edge.</li>
+<li>The Mini App’s public URL is expected to use HTTPS in production.</li>
+<li>Uploads are served only through an application-controlled static prefix.</li>
+</ul>
+<h2 id="review-checklist">Review checklist</h2>
+<ol>
+<li>Confirm each sensitive controller endpoint has JWT and appropriate role guard.</li>
+<li>Confirm service methods filter by <code>masterId</code>, authenticated user, or a verified client relationship.</li>
+<li>Keep <code>JWT_SECRET</code> and bot/database/backup credentials out of git, screenshots, logs, and this vault.</li>
+<li>Rotate secrets after suspected exposure and redeploy all dependent services.</li>
+<li>Treat <code>/backup/restore</code>, role updates, broadcast, content deletion, and calendar token regeneration as high-impact actions; preserve audit context.</li>
+<li>The backend’s Docker socket mount is powerful. Restrict host access and do not expose the backend port publicly.</li>
+</ol>
+<blockquote class="callout" data-kind="warning">
+<strong class="callout-title">warning</strong><p>Frontend route metadata is only navigation gating. A user can call an API directly; server authorization remains the real control plane.</p>
+</blockquote>
+</article></main>
+<footer><a href="https://github.com/swagalabs/murhub.docs/commit/bb394bfe2941bbc701192deaf275280c9b289837">murhub.docs · bb394bf</a></footer>
+<button type="button" id="update" hidden>Обновить</button></body></html>

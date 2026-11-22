@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ru" data-root="../../" data-sha="bb394bfe2941bbc701192deaf275280c9b289837">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>API Reference · SwagaHub</title><link rel="stylesheet" href="../../style.css">
+<script defer src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="../../app.js"></script>
+</head>
+<body><header class="masthead"><a class="brand" href="../../index.html">SwagaHub</a><nav aria-label="Основная навигация"><a href="../../index.html#documentation">Документация</a><a data-project href="https://github.com/orgs/swagalabs/projects/16">Проект</a></nav></header>
+<main class="container"><a class="back" href="../../index.html#documentation">Все документы</a><article class="document"><h1 id="api-reference">API Reference</h1>
+<p><a href="../TechnicalDocument.html">← Core technical document</a> · <a href="Architecture.html">Architecture</a> · <a href="Security%20and%20Access.html">Security and Access</a></p>
+<p>Base path: <code>/api</code>. Responses are JSON unless the endpoint explicitly returns an iCalendar file or a static upload. The exact request DTOs live beside each controller under <code>backend/src/**/dto</code>.</p>
+<h2 id="authentication-and-identity">Authentication and identity</h2>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /auth/telegram</code></td>
+<td>Sign in/register from validated Telegram WebApp init data</td>
+<td>Telegram init guard</td>
+</tr>
+<tr>
+<td><code>POST /auth/login</code>, <code>/auth/register</code></td>
+<td>Password sign-in/registration</td>
+<td>public</td>
+</tr>
+<tr>
+<td><code>POST /auth/password</code></td>
+<td>Create/change password login</td>
+<td>authenticated</td>
+</tr>
+<tr>
+<td><code>GET/PATCH /auth/me</code></td>
+<td>Current user and editable profile</td>
+<td>authenticated</td>
+</tr>
+<tr>
+<td><code>GET /auth/me/activity</code>, <code>POST /auth/presence</code></td>
+<td>Activity/presence</td>
+<td>authenticated</td>
+</tr>
+<tr>
+<td><code>GET /auth/users</code>, <code>/auth/users/:id</code>, <code>PATCH /auth/users/:id</code></td>
+<td>User/role administration</td>
+<td>admin</td>
+</tr>
+<tr>
+<td><code>POST /auth/broadcast</code></td>
+<td>Telegram broadcast</td>
+<td>admin</td>
+</tr>
+<tr>
+<td><code>GET /auth/online-users</code>, <code>/auth/new-users</code></td>
+<td>Admin presence/new users</td>
+<td>admin</td>
+</tr>
+</tbody>
+</table>
+<h2 id="appointments-and-booking">Appointments and booking</h2>
+<table>
+<thead>
+<tr>
+<th>Endpoint group</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /appointments/masters</code>, <code>/services</code>, <code>/available-slots</code></td>
+<td>Booking discovery and availability</td>
+</tr>
+<tr>
+<td><code>POST /appointments/book</code></td>
+<td>Client booking creation</td>
+</tr>
+<tr>
+<td><code>GET /appointments/mine</code>, <code>POST /appointments/:id/cancel</code>, <code>POST /appointments/:id/reminder</code></td>
+<td>Client appointment management</td>
+</tr>
+<tr>
+<td><code>GET /appointments/calendar-summary</code>, <code>/day-detail</code>, <code>/discount-slots</code></td>
+<td>Client calendar and promotion views</td>
+</tr>
+<tr>
+<td><code>GET/PATCH /appointments/profile</code>, <code>GET /appointments/my-stats</code>, <code>/my-referral</code></td>
+<td>Client profile, metrics, referral</td>
+</tr>
+<tr>
+<td><code>GET /appointments/{home,my}-works</code>, work like endpoints, <code>/liked-works</code></td>
+<td>Feed and reactions</td>
+</tr>
+</tbody>
+</table>
+<p>Master CRM appointment endpoints are under <code>/crm/appointments</code>: list/create/get/update/delete plus <code>repeat-suggestion</code>, <code>repeat</code>, <code>day/message</code>, and <code>day/cancel</code> actions. Client creation, service catalog, availability, discount promotion, clients, analytics, expenses, and calendar feed token are likewise under <code>/crm</code>.</p>
+<h2 id="crm-and-content">CRM and content</h2>
+<table>
+<thead>
+<tr>
+<th>Prefix</th>
+<th>Capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/crm/clients</code></td>
+<td>Client CRUD, profile/activity, name approval, student status, reminders/messages, client photos</td>
+</tr>
+<tr>
+<td><code>/crm/services</code></td>
+<td>Master service catalog CRUD</td>
+</tr>
+<tr>
+<td><code>/crm/availability</code></td>
+<td>Slot CRUD, alternative booking, promotion/unpromotion</td>
+</tr>
+<tr>
+<td><code>/crm/stats</code>, <code>/crm/analytics</code>, <code>/crm/expenses</code></td>
+<td>Reporting and monthly expense entries</td>
+</tr>
+<tr>
+<td><code>/crm/showcase</code></td>
+<td>Public feed and master management CRUD</td>
+</tr>
+<tr>
+<td><code>/crm/reviews</code></td>
+<td>Public/manage feeds, visibility, review configuration</td>
+</tr>
+<tr>
+<td><code>/chat</code></td>
+<td>Recipient list, conversation lifecycle, manual messages, templates</td>
+</tr>
+</tbody>
+</table>
+<h2 id="other-domain-apis">Other domain APIs</h2>
+<table>
+<thead>
+<tr>
+<th>Prefix</th>
+<th>Capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/custom-time-requests</code></td>
+<td>Client creation; master/admin list, accept, decline</td>
+</tr>
+<tr>
+<td><code>/giveaways</code></td>
+<td>List, CRUD, participants/verification, entry, draw, winners</td>
+</tr>
+<tr>
+<td><code>/learning/courses</code></td>
+<td>Catalog, course CRUD, enrollment and enrollment-status management</td>
+</tr>
+<tr>
+<td><code>/suggestions</code></td>
+<td>Client proposal create/list; master/admin status change</td>
+</tr>
+<tr>
+<td><code>/patch-notes</code></td>
+<td>Release notes list/create and Telegram notification</td>
+</tr>
+<tr>
+<td><code>/admin/strings</code></td>
+<td>Runtime app-string defaults/overrides; audit log and bot instances</td>
+</tr>
+<tr>
+<td><code>/backup/run</code>, <code>/backup/restore</code></td>
+<td>Protected database backup/restore</td>
+</tr>
+<tr>
+<td><code>/calendar/feed/:token.ics</code></td>
+<td>Token-authorized iCalendar feed</td>
+</tr>
+<tr>
+<td><code>/summary/send</code></td>
+<td>Master summary delivery</td>
+</tr>
+</tbody>
+</table>
+<h2 id="api-change-checklist">API change checklist</h2>
+<ol>
+<li>Add/adjust a DTO with validation decorators.</li>
+<li>Put ownership and role checks in service/guards, not only in Vue.</li>
+<li>Update controller, service, entity/migration as needed.</li>
+<li>Update the calling view/composable and this note if the public contract changed.</li>
+<li>Test both an allowed request and a request from the wrong user/role.</li>
+</ol>
+<blockquote class="callout" data-kind="tip">
+<strong class="callout-title">tip</strong><p>Controllers are a concise endpoint index: <code>rg "@(Controller|Get|Post|Patch|Put|Delete)" backend/src --glob '*controller.ts'</code>.</p>
+</blockquote>
+</article></main>
+<footer><a href="https://github.com/swagalabs/murhub.docs/commit/bb394bfe2941bbc701192deaf275280c9b289837">murhub.docs · bb394bf</a></footer>
+<button type="button" id="update" hidden>Обновить</button></body></html>

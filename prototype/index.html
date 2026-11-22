@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="ru" data-theme="dark" data-root="../" data-sha="bb394bfe2941bbc701192deaf275280c9b289837"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14110e">
+  <title>MurrHub — прототип</title>
+  <link rel="icon" href="media/instagram.png" type="image/png">
+  <link rel="apple-touch-icon" href="media/instagram.png">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="js/chocolate.js"></script>
+  <script src="js/themes.js"></script>
+  <script>MurrThemes.paint();</script>
+<script defer="" src="https://telegram.org/js/telegram-web-app.js"></script><script defer="" src="../app.js"></script></head>
+<body>
+  <div class="splash" id="splash" hidden="">
+    <button type="button" class="splash-paw" id="splash-paw" aria-label="Открыть">
+      <span class="mark"></span>
+    </button>
+  </div>
+  <div class="studio">
+    <header class="bar">
+      <a class="brand" href="#/client/feed"><span class="mark" aria-hidden="true"></span>Murr<em>Hub</em></a>
+      <p class="bar-note">Прототип · Вильнюс · без сборки</p>
+      <div class="bar-actions">
+        <div class="switch" role="group" aria-label="Роль">
+          <button type="button" id="role-client" data-role="client">Клиент</button>
+          <button type="button" id="role-master" data-role="master">Мастер</button>
+        </div>
+        <div class="theme-track" id="theme-track" role="group" aria-label="Тема" title="Стрелки влево и вправо — соседняя тема">
+          <button type="button" class="nav" id="theme-prev" aria-label="Предыдущая тема">‹</button>
+          <button type="button" id="theme-current" aria-haspopup="dialog" aria-expanded="false" aria-controls="theme-panel" aria-label="Список тем, сейчас Шоколад">
+            <span class="theme-swatches" id="theme-swatches" aria-hidden="true"><i style="background:#14110e"></i><i style="background:#262019"></i><i style="background:#e08955"></i></span>
+            <span class="theme-label" id="theme-label">Шоколад</span>
+            <span class="theme-chev" aria-hidden="true">▾</span>
+          </button>
+          <button type="button" class="nav" id="theme-next" aria-label="Следующая тема">›</button>
+        </div>
+        <label class="choc" id="choc" for="chocolate" hidden="">Шоколад
+          <input id="chocolate" type="range" min="0" max="100" value="78" aria-label="Светлая тема: от песка к шоколаду">
+        </label>
+        <button type="button" id="restart" class="ghost">Начать с начала</button>
+        <a class="ghost" href="flows.html">Потоки</a>
+        <a class="ghost" id="open-name" href="name.html" target="murrhub-name">Название</a>
+        <button type="button" id="reset" class="ghost">Сбросить</button>
+      </div>
+    </header>
+    <div class="stage">
+      <aside class="aside left">
+        <p class="eyebrow">Две роли, один профиль</p>
+        <h2>Запись — первая работа. Лента — привычка.</h2>
+        <p id="where" class="where"></p>
+        <p class="fine">Имена и работы вымышленные. Салона нет: один человек — один профиль. Комиссия и оплата в приложении в эту версию не входят.</p>
+      </aside>
+      <div class="phone" id="phone">
+        <div class="island" aria-hidden="true"></div>
+        <div class="statusbar"><span>9:41</span><span class="sigs" aria-hidden="true"><i></i><i></i><b></b></span></div>
+        <div class="screen" id="screen"></div>
+        <nav class="tabbar" id="tabbar" aria-label="Разделы"></nav>
+        <div class="toast" id="toast" role="status" aria-live="polite" hidden=""></div>
+      </div>
+      <aside class="aside right">
+        <p class="eyebrow">Переходы</p>
+        <nav class="jumps" id="jumps"></nav>
+      </aside>
+    </div>
+  </div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/namewin.js"></script>
+
+
+<button hidden="" type="button" id="update" style="position:fixed;right:1rem;bottom:1rem;z-index:9999;padding:.6rem 1.2rem;border-radius:2rem">Обновить</button></body></html>

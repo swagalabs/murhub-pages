@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ru" data-root="../../" data-sha="bb394bfe2941bbc701192deaf275280c9b289837">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operations · SwagaHub</title><link rel="stylesheet" href="../../style.css">
+<script defer src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="../../app.js"></script>
+</head>
+<body><header class="masthead"><a class="brand" href="../../index.html">SwagaHub</a><nav aria-label="Основная навигация"><a href="../../index.html#documentation">Документация</a><a data-project href="https://github.com/orgs/swagalabs/projects/16">Проект</a></nav></header>
+<main class="container"><a class="back" href="../../index.html#documentation">Все документы</a><article class="document"><h1 id="operations">Operations</h1>
+<p><a href="../TechnicalDocument.html">← Core technical document</a> · <a href="Security%20and%20Access.html">Security and Access</a></p>
+<h2 id="local-development">Local development</h2>
+<pre><code class="language-bash">docker compose up -d postgres
+(cd backend &amp;&amp; npm install &amp;&amp; npm run start:dev)
+(cd frontend &amp;&amp; npm install &amp;&amp; npm run dev)
+</code></pre>
+<p>The locally started backend defaults to port <code>3000</code>; Vite normally uses <code>5173</code>; PostgreSQL is bound to <code>127.0.0.1:5432</code>. Copy <code>backend/.env.example</code> to <code>backend/.env</code> and supply development-safe values before starting the backend.</p>
+<p>Useful verification:</p>
+<pre><code class="language-bash">curl http://127.0.0.1:3000/api/health
+(cd backend &amp;&amp; npm test)
+(cd frontend &amp;&amp; npm run build)
+</code></pre>
+<h2 id="production-deployment">Production deployment</h2>
+<p>Compose starts:</p>
+<ul>
+<li><code>postgres</code> (PostgreSQL 16), host-only <code>127.0.0.1:5432</code>;</li>
+<li><code>backend</code>, host-only <code>127.0.0.1:3100</code> mapped to container 3000;</li>
+<li><code>frontend</code>, host-only <code>127.0.0.1:8090</code> mapped to container 80.</li>
+</ul>
+<p>nginx is public-facing. It proxies <code>/</code> to frontend and <code>/api/</code> to backend, forwards host/client/protocol headers, and caps request bodies at 25 MB. Telegram Mini Apps require HTTPS in production; set <code>MINI_APP_URL</code> to the public HTTPS origin and obtain a valid certificate (the repo deployment note describes certbot/nip.io and custom-domain paths).</p>
+<pre><code class="language-bash">docker compose up -d --build
+docker compose ps
+curl http://127.0.0.1:3100/api/health
+</code></pre>
+<p>Persistent volumes are <code>postgres_data</code>, <code>backend_uploads</code>, and <code>backend_backups</code>. Do not remove volumes as a normal redeploy step.</p>
+<h2 id="required-configuration">Required configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TELEGRAM_BOT_TOKEN</code></td>
+<td>Bot updates and outbound Telegram actions.</td>
+</tr>
+<tr>
+<td><code>MINI_APP_URL</code></td>
+<td>Public Mini App origin; HTTPS in production.</td>
+</tr>
+<tr>
+<td><code>BACKEND_URL</code></td>
+<td>Backend public base URL where needed.</td>
+</tr>
+<tr>
+<td><code>JWT_SECRET</code></td>
+<td>JWT signing secret; use a long, unique random value.</td>
+</tr>
+<tr>
+<td><code>DB_HOST</code>, <code>DB_PORT</code>, <code>DB_USER</code>, <code>DB_PASSWORD</code>, <code>DB_NAME</code></td>
+<td>PostgreSQL connectivity. Compose overrides host settings for the container.</td>
+</tr>
+<tr>
+<td><code>UPLOADS_DIR</code></td>
+<td>Filesystem location for uploaded assets.</td>
+</tr>
+<tr>
+<td><code>BACKUP_DESTINATION</code>, <code>BACKUP_*</code></td>
+<td>Backup destination, path/timezone, and optional OneDrive/SMTP credentials.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="backups-and-restore">Backups and restore</h2>
+<p>The backup service runs daily at <code>00:00</code> in <code>BACKUP_TZ</code> (or server timezone if absent). Destination is one of local, OneDrive, or email. In the Compose stack, <code>BACKUP_USE_DOCKER=true</code> is appropriate because PostgreSQL is inside Docker. On a directly run backend with <code>pg_dump</code> available, use <code>false</code>.</p>
+<p>The protected <code>/api/backup/run</code> and <code>/api/backup/restore</code> endpoints support operator actions. Before a restore, preserve a fresh backup, identify the precise target database, and plan a maintenance window: restore is materially destructive.</p>
+<h2 id="scheduled-work">Scheduled work</h2>
+<table>
+<thead>
+<tr>
+<th>Work</th>
+<th>Cadence/mechanism</th>
+<th>Operational implication</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Database backup</td>
+<td>cron at midnight</td>
+<td>Check destination and retention regularly.</td>
+</tr>
+<tr>
+<td>Discount broadcast processing</td>
+<td>at startup then every 5 min</td>
+<td>Must have one active scheduler owner.</td>
+</tr>
+<tr>
+<td>Appointment reminders/post-session/re-engagement</td>
+<td>Nest scheduled services</td>
+<td>Requires correct bot token, business time handling, and continuous backend runtime.</td>
+</tr>
+<tr>
+<td>Master summary</td>
+<td>scheduled summary service</td>
+<td>Delivery is logged in <code>master_summary_logs</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="time-and-timezone">Time and timezone</h2>
+<p>The app retains appointment dates and times in separate database columns. <code>TZ=UTC</code> is set in Compose, while backups can use <code>Europe/Vilnius</code>; the repository also has <code>backend/TIMEZONE.md</code> and timezone utilities. Any change touching slot comparison, cron time, calendar output, or reminders must be tested around UTC offset and daylight-saving boundaries. Do not casually parse date-only values as UTC instants.</p>
+<h2 id="fast-troubleshooting">Fast troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>First checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mini App opens but API fails</td>
+<td>nginx <code>/api/</code> proxy, backend health, CORS/MINI_APP_URL, JWT.</td>
+</tr>
+<tr>
+<td>Telegram says URL is invalid</td>
+<td>Verify HTTPS, certificate, and exact <code>MINI_APP_URL</code>.</td>
+</tr>
+<tr>
+<td>Bot not sending</td>
+<td>Token, backend logs, outbound network reachability, recipient Telegram ID.</td>
+</tr>
+<tr>
+<td>Slots/reminders at wrong time</td>
+<td>Compare server <code>TZ</code>, application timezone utilities, stored date/time, and client timezone.</td>
+</tr>
+<tr>
+<td>Upload unavailable</td>
+<td><code>UPLOADS_DIR</code>, backend volume, <code>/api/uploads/</code> static mapping, nginx size limit.</td>
+</tr>
+<tr>
+<td>Backup fails</td>
+<td>destination vars, credentials, <code>pg_dump</code> or Docker socket mode, mounted backup volume.</td>
+</tr>
+</tbody>
+</table>
+</article></main>
+<footer><a href="https://github.com/swagalabs/murhub.docs/commit/bb394bfe2941bbc701192deaf275280c9b289837">murhub.docs · bb394bf</a></footer>
+<button type="button" id="update" hidden>Обновить</button></body></html>

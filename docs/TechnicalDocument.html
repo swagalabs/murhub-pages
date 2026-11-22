@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ru" data-root="../" data-sha="bb394bfe2941bbc701192deaf275280c9b289837">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MurrNails — Technical Document · SwagaHub</title><link rel="stylesheet" href="../style.css">
+<script defer src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="../app.js"></script>
+<script defer src="../mermaid.min.js"></script><script defer src="../diagrams.js"></script></head>
+<body><header class="masthead"><a class="brand" href="../index.html">SwagaHub</a><nav aria-label="Основная навигация"><a href="../index.html#documentation">Документация</a><a data-project href="https://github.com/orgs/swagalabs/projects/16">Проект</a></nav></header>
+<main class="container"><a class="back" href="../index.html#documentation">Все документы</a><article class="document"><h1 id="murrnails--technical-document">MurrNails — Technical Document</h1>
+<blockquote class="callout" data-kind="abstract">
+<strong class="callout-title">abstract</strong><p>MurrNails is a Telegram-first CRM, booking, and community application for service professionals. It combines a Vue 3 Telegram Mini App, a NestJS HTTP API and Telegram bot, PostgreSQL persistence, scheduled automation, and a Docker/nginx production deployment.</p>
+</blockquote>
+<h2 id="start-here">Start here</h2>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Understand the system and module boundaries</td>
+<td><a href="Technical%20Notes/Architecture.html">Technical Notes/Architecture</a></td>
+</tr>
+<tr>
+<td>Call or change an endpoint</td>
+<td><a href="Technical%20Notes/API%20Reference.html">Technical Notes/API Reference</a></td>
+</tr>
+<tr>
+<td>Understand persistent data</td>
+<td><a href="Technical%20Notes/Data%20Model.html">Technical Notes/Data Model</a></td>
+</tr>
+<tr>
+<td>Run, deploy, back up, or troubleshoot</td>
+<td><a href="Technical%20Notes/Operations.html">Technical Notes/Operations</a></td>
+</tr>
+<tr>
+<td>Reason about sign-in and access</td>
+<td><a href="Technical%20Notes/Security%20and%20Access.html">Technical Notes/Security and Access</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="product-boundary">Product boundary</h2>
+<p>The product serves three principal roles:</p>
+<ul>
+<li><strong>Client</strong> — books a service, manages a profile, sees appointments/promo/community content, takes part in giveaways, and receives bot messages.</li>
+<li><strong>Master</strong> — operates a personal CRM: clients, services, availability, appointments, promotion, statistics, content, and follow-up.</li>
+<li><strong>Admin</strong> — has master capabilities across masters plus user/role management, broadcasts, and global oversight.</li>
+</ul>
+<p>Telegram is both a launch surface and a communication channel. The Mini App is not the only interface: the bot delivers reminders, collects feedback, supports giveaways, and handles post-session actions. Password authentication also exists so the app can be used outside a Telegram launch context.</p>
+<h2 id="system-at-a-glance">System at a glance</h2>
+<pre class="mermaid">flowchart LR
+  U[Client / Master / Admin] --&gt; TG[Telegram]
+  U --&gt; FE[Vue 3 Mini App]
+  TG --&gt; FE
+  TG &lt;--&gt; BOT[Telegraf bot]
+  FE --&gt;|HTTPS /api| API[NestJS API]
+  BOT --&gt; API
+  API &lt;--&gt; PG[(PostgreSQL)]
+  API --&gt; UP[Upload volume]
+  JOBS[In-process scheduled jobs] --&gt; API
+  NGINX[nginx + TLS] --&gt; FE
+  NGINX --&gt; API
+</pre>
+<h3 id="runtime-components">Runtime components</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Implementation</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mini App</td>
+<td>Vue 3, Vite, Vue Router, Tailwind</td>
+<td>Responsive user interface, Telegram WebApp integration, JWT-bearing API calls.</td>
+</tr>
+<tr>
+<td>API</td>
+<td>NestJS 11, TypeORM</td>
+<td>Domain rules, authorization, REST API, static uploads, orchestration.</td>
+</tr>
+<tr>
+<td>Bot</td>
+<td>Telegraf</td>
+<td>Telegram updates, reminders, feedback and interactive actions.</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>PostgreSQL 16</td>
+<td>Application’s durable system of record.</td>
+</tr>
+<tr>
+<td>Scheduler</td>
+<td><code>@nestjs/schedule</code> + an interval service</td>
+<td>Reminders, post-session follow-ups, daily backups, summaries, delayed promotions.</td>
+</tr>
+<tr>
+<td>Edge/deployment</td>
+<td>Docker Compose, nginx</td>
+<td>Container lifecycle, localhost-only service ports, TLS termination and reverse proxying.</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="callout" data-kind="warning">
+<strong class="callout-title">Redis discrepancy</strong><p>The historical README names Redis, but the current <code>docker-compose.yml</code> contains only PostgreSQL, backend, and frontend services. Treat Redis as <strong>not part of the checked-in active deployment</strong> unless a separate environment adds it.</p>
+</blockquote>
+<h2 id="repository-map">Repository map</h2>
+<pre><code class="language-text">murrnails-app/
+├── frontend/                 Vue Mini App
+│   └── src/{views,components,composables,api,router}
+├── backend/                  NestJS application
+│   └── src/{auth,bot,crm,appointments,...}
+├── deploy/nginx.conf         production reverse proxy
+├── docker-compose.yml        service topology and persistent volumes
+├── dev.sh                    local developer helper
+└── docs/                     project-local implementation notes
+</code></pre>
+<p>The authoritative code is outside this Obsidian vault at <code>Documents/murrnails-app</code>; this vault records its architecture and operating knowledge. When behaviour conflicts with this document, code and the live environment take precedence.</p>
+<h2 id="backend-domain-map">Backend domain map</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Owns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auth</code></td>
+<td>Telegram/password auth, user profile, roles, JWT, broadcast</td>
+</tr>
+<tr>
+<td><code>bot</code></td>
+<td>Telegram bot commands, callbacks, outbound messaging</td>
+</tr>
+<tr>
+<td><code>crm</code></td>
+<td>clients, services, availability, master appointments, promotion, analytics, showcase, reviews, photos</td>
+</tr>
+<tr>
+<td><code>appointments</code></td>
+<td>client-facing booking, appointments, likes, personal stats and profile</td>
+</tr>
+<tr>
+<td><code>custom-time-requests</code></td>
+<td>client-requested off-calendar time windows</td>
+</tr>
+<tr>
+<td><code>giveaways</code></td>
+<td>giveaway lifecycle, entries, verification, draws, winners</td>
+</tr>
+<tr>
+<td><code>chat</code></td>
+<td>bot conversation history, templates, inbox actions</td>
+</tr>
+<tr>
+<td><code>learning</code></td>
+<td>courses and enrollments</td>
+</tr>
+<tr>
+<td><code>backup</code></td>
+<td>on-demand/automatic PostgreSQL dump and restore</td>
+</tr>
+<tr>
+<td><code>calendar</code></td>
+<td>tokenised iCalendar feed</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>master summaries and delivery log</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>content strings, audit log, bot-instance metadata</td>
+</tr>
+<tr>
+<td><code>suggestions</code>, <code>patch-notes</code></td>
+<td>feedback backlog and product updates</td>
+</tr>
+</tbody>
+</table>
+<h2 id="critical-business-flows">Critical business flows</h2>
+<h3 id="booking">Booking</h3>
+<ol>
+<li>A signed-in client chooses a master, service, and free availability slot.</li>
+<li><code>POST /api/appointments/book</code> validates the request and creates an appointment linked to the client, master, service, and slot.</li>
+<li>The bot informs the master; appointment automation later sends client reminders.</li>
+<li>A master can also create/edit/cancel appointments directly from CRM, including manual and alternative bookings.</li>
+</ol>
+<p><strong>Invariant:</strong> availability, appointment ownership, and appointment status must be checked server-side; the client UI is never the source of truth. See <a href="Technical%20Notes/API%20Reference.html#appointments-and-booking">Technical Notes/API Reference#Appointments and booking</a>.</p>
+<h3 id="session-completion-and-feedback">Session completion and feedback</h3>
+<ol>
+<li>After a scheduled session’s end time, automation asks the master through Telegram whether it occurred.</li>
+<li>The master can mark it done, move it, cancel it, or flag a no-show.</li>
+<li>Completed sessions can trigger a client feedback conversation; submitted feedback becomes an <code>appointment_feedback</code> record and may be displayed publicly according to its visibility flag.</li>
+</ol>
+<h3 id="promotion">Promotion</h3>
+<ol>
+<li>A master discounts an availability slot and may request an immediate promotion preview/send.</li>
+<li>The CRM can queue a second discount broadcast.</li>
+<li>The in-process interval checks due <code>scheduled_discount_broadcasts</code> every five minutes and deletes each row after processing.</li>
+</ol>
+<h3 id="content-and-community">Content and community</h3>
+<p>Showcase work and client work are surfaced in feeds. Likes are stored per user/work while manual boosts support editorial counts. Learning courses are master-owned and enrollments move through <code>pending_payment</code>, <code>confirmed</code>, or <code>cancelled</code>.</p>
+<h2 id="interface-and-data-conventions">Interface and data conventions</h2>
+<ul>
+<li>Every HTTP route is prefixed with <code>/api</code>; <code>/api/health</code> is the basic health endpoint.</li>
+<li>Nest’s global validation pipe transforms inputs, strips unknown properties, and rejects unrecognised fields.</li>
+<li>Protected API requests use a JWT bearer token. Route guards add authentication and role/ownership checks.</li>
+<li>Dates and times are often persisted separately (<code>date</code>, <code>startTime</code>, <code>endTime</code>), so callers must preserve the intended business timezone. Read <a href="Technical%20Notes/Operations.html#time-and-timezone">Technical Notes/Operations#Time and timezone</a>.</li>
+<li>Uploads are exposed from <code>/api/uploads/*</code>; nginx permits bodies up to 25 MB, matching the application’s upload use cases.</li>
+</ul>
+<h2 id="technical-risks-worth-remembering">Technical risks worth remembering</h2>
+<blockquote class="callout" data-kind="danger">
+<strong class="callout-title">Production schema changes</strong><p>TypeORM <code>synchronize</code> is enabled outside production and disabled in production. There is no general migration framework visible in the repository; schema changes therefore need an explicit SQL migration/deployment plan. See <a href="Technical%20Notes/Data%20Model.html#schema-evolution">Technical Notes/Data Model#Schema evolution</a>.</p>
+</blockquote>
+<blockquote class="callout" data-kind="warning">
+<strong class="callout-title">Single-process jobs</strong><p>Reminders, backup, and delayed-promotion processing run in the API process. Running multiple backend replicas can duplicate jobs unless coordination is introduced.</p>
+</blockquote>
+<blockquote class="callout" data-kind="warning">
+<strong class="callout-title">Secrets</strong><p><code>TELEGRAM_BOT_TOKEN</code>, <code>JWT_SECRET</code>, database credentials, OneDrive refresh tokens, and SMTP credentials are runtime secrets. Keep them in <code>backend/.env</code> or the deployment secret store; never put production values in the vault or repository.</p>
+</blockquote>
+<h2 id="development-and-verification">Development and verification</h2>
+<p>The normal local path is:</p>
+<pre><code class="language-bash">docker compose up -d postgres
+cd backend &amp;&amp; npm install &amp;&amp; npm run start:dev
+cd frontend &amp;&amp; npm install &amp;&amp; npm run dev
+</code></pre>
+<p>For the production-shaped stack, build/run all Compose services. More exact commands, URLs, environment variables, backups, and recovery are in <a href="Technical%20Notes/Operations.html">Technical Notes/Operations</a>. Backend tests use Jest; frontend build uses <code>npm run build</code>.</p>
+<h2 id="source-of-truth-checklist">Source-of-truth checklist</h2>
+<p>Before changing a domain behaviour, inspect in this order:</p>
+<ol>
+<li>Its controller and DTO for public contract and validation.</li>
+<li>Its service for authorization and state transitions.</li>
+<li>Its entity and related entities for persistence implications.</li>
+<li>The corresponding Vue view/composable for UX assumptions.</li>
+<li>Any bot handler or scheduled service that also changes the same data.</li>
+</ol>
+<h2 id="related-implementation-documents">Related implementation documents</h2>
+<ul>
+<li>Existing repository docs: <code>murrnails-app/README.md</code>, <code>backend/README.md</code>, <code>backend/TIMEZONE.md</code>, <code>docs/calendar-sync.md</code>, and <code>deploy/README.md</code>.</li>
+<li>This vault: <a href="Technical%20Notes/Architecture.html">Technical Notes/Architecture</a>, <a href="Technical%20Notes/API%20Reference.html">Technical Notes/API Reference</a>, <a href="Technical%20Notes/Data%20Model.html">Technical Notes/Data Model</a>, <a href="Technical%20Notes/Operations.html">Technical Notes/Operations</a>, and <a href="Technical%20Notes/Security%20and%20Access.html">Technical Notes/Security and Access</a>.</li>
+</ul>
+</article></main>
+<footer><a href="https://github.com/swagalabs/murhub.docs/commit/bb394bfe2941bbc701192deaf275280c9b289837">murhub.docs · bb394bf</a></footer>
+<button type="button" id="update" hidden>Обновить</button></body></html>
