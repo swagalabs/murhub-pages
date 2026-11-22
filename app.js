@@ -36,3 +36,26 @@ document.addEventListener('visibilitychange', checkVersion);
 app?.onEvent?.('activated', checkVersion);
 window.addEventListener('pageshow', checkVersion);
 setInterval(checkVersion, 60000);
+
+const library = document.querySelector('.library');
+if (library) {
+  const filter = library.querySelector('.filter');
+  const input = filter.querySelector('input');
+  const status = library.querySelector('.results');
+  filter.hidden = false;
+  input.addEventListener('input', () => {
+    const query = input.value.trim().toLocaleLowerCase();
+    let count = 0;
+    library.querySelectorAll('.section').forEach(section => {
+      let visible = 0;
+      section.querySelectorAll('li').forEach(row => {
+        row.hidden = !row.textContent.toLocaleLowerCase().includes(query);
+        if (!row.hidden) visible++;
+      });
+      section.hidden = visible === 0;
+      count += visible;
+    });
+    status.hidden = query === '';
+    status.textContent = count ? `Найдено материалов: ${count}` : 'Материалов с таким названием нет.';
+  });
+}
