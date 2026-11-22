@@ -1,0 +1,6 @@
+@media (max-width: 42rem) {
+  .studio .stage { grid-template-columns: minmax(0, 1fr); padding-inline: 1rem; }
+  .stage .phone { width: min(100%, var(--phone-w)); }
+  .stage .aside { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+  .studio .bar, .studio .bar-actions { min-width: 0; flex-wrap: wrap; }
+}

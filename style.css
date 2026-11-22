@@ -10,26 +10,26 @@
   font: 100%/1.55 Arial, Helvetica, sans-serif;
 }
 * { box-sizing: border-box; }
-body { max-width: 78rem; padding: 0 clamp(1rem, 4vw, 3.25rem); margin: auto; }
+body { width: 100%; max-width: 78rem; padding: 0 clamp(1rem, 4vw, 3.25rem); margin: auto; }
 a { color: inherit; text-underline-offset: .22em; }
 a:focus-visible, button:focus-visible { outline: 3px solid #006bc5; outline-offset: 3px; }
 button { font: inherit; cursor: pointer; }
 .masthead, .masthead nav, .brand, .hero, .resource-list a { display: flex; align-items: center; }
-.masthead { justify-content: space-between; border-bottom: 1px solid var(--ink); padding: 1rem 0; gap: .65rem; }
+.masthead { flex-wrap: wrap; justify-content: space-between; border-bottom: 1px solid var(--ink); padding: 1rem 0; gap: .65rem; }
 .masthead nav { gap: clamp(.65rem, 2vw, 1.75rem); }
 .masthead a { text-decoration: none; font-weight: 700; }
 .masthead nav a:hover, .resource-list a:hover span { text-decoration: underline; }
 .brand { gap: .45rem; font-size: 1.35rem; letter-spacing: -.045em; }
 .container { padding: 1.25rem 0 3rem; }
 .cover, .signature, .profile-links img { display: block; width: 100%; height: auto; }
-.profile-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: .5rem; }
+.profile-links { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; margin-top: .5rem; }
 .profile-links a:hover { filter: brightness(.91); }
 .hero { margin: 2.5rem 0 1.25rem; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 h1, h2 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; line-height: 1.08; letter-spacing: -.045em; }
-.hero h1 { font-size: clamp(2.5rem, 5vw, 4.6rem); margin: 0; }
+.hero h1 { font-size: clamp(1.9rem, 7vw, 4.6rem); margin: 0; }
 .project, #update { padding: .7rem 1rem; background: var(--ink); color: var(--paper); text-decoration: none; font-weight: 700; }
 .project:hover, #update:hover { background: var(--green); }
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--green); gap: 1px; border: 1px solid var(--green); }
+.cards { display: grid; grid-template-columns: minmax(0, 1fr); background: var(--green); gap: 1px; border: 1px solid var(--green); }
 .card { display: block; padding: 1.25rem; background: var(--paper); text-decoration: none; }
 .card:hover { background: #fffaf0; }
 .card strong, .card span { display: block; }
@@ -54,12 +54,15 @@ h1, h2 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; line-
 footer { padding-bottom: 1.2rem; font: .85rem/1.6 monospace; }
 .signature { margin-bottom: .6rem; }
 #update { position: fixed; bottom: 1rem; right: 1rem; border: 1px solid var(--paper); }
-@media (max-width: 42rem) {
-  .profile-links { grid-template-columns: 1fr; }
-  .profile-links img { max-height: 3rem; object-fit: contain; object-position: left; }
-  .profile-links a { background: var(--orange); }
-  .cards { grid-template-columns: 1fr; }
-  .hero { margin-top: 1.75rem; }
-  .card { padding: .95rem; }
-  .masthead nav { font-size: .875rem; }
+
+.container, .hero > *, .profile-links > *, .cards > *, .resource-list span { min-width: 0; }
+.hero, .card, .document { overflow-wrap: anywhere; }
+.masthead nav { flex-wrap: wrap; font-size: .875rem; }
+.profile-links a { background: var(--orange); }
+.profile-links img { max-height: 3rem; object-fit: contain; object-position: left; }
+.document pre, .document table { max-width: 100%; }
+@media (min-width: 43rem) {
+  .profile-links, .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .profile-links img { max-height: none; }
+  .masthead nav { font-size: 1rem; }
 }
